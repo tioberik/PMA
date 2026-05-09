@@ -3,6 +3,7 @@ import GameCard from "@/components/games/GameCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { firestore } from "@/firebase";
 import type { Game } from "@/types/game";
+import { useRouter } from "expo-router";
 import { addDoc, collection, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
@@ -16,12 +17,14 @@ import {
 
 export default function GamesScreen() {
     const { isLoggedIn } = useAuth();
+    const router = useRouter();
 
     const [games, setGames] = useState<Game[]>([]);
     const [modalVisible, setModalVisible] = useState(false);
     const [gameTitle, setGameTitle] = useState("");
     const [gameDescription, setGameDescription] = useState("");
     const [gameImageUrl, setGameImageUrl] = useState("");
+    const [gameRoute, setGameRoute] = useState("");
 
     useEffect(() => {
         const fetchGames = async () => {
@@ -48,10 +51,11 @@ export default function GamesScreen() {
         setGameTitle("");
         setGameDescription("");
         setGameImageUrl("");
+        setGameRoute("");
     };
 
     const handleAddGame = async () => {
-        if (!gameTitle || !gameDescription || !gameImageUrl) {
+        if (!gameTitle || !gameDescription || !gameImageUrl || !gameRoute) {
             Alert.alert("Nedostaju podaci", "Molimo unesite sve podatke o igri.");
             return;
         }
@@ -65,6 +69,7 @@ export default function GamesScreen() {
             title: gameTitle,
             description: gameDescription,
             imageUrl: gameImageUrl,
+            route: gameRoute,
         };
 
         try {
@@ -93,7 +98,11 @@ export default function GamesScreen() {
             <FlatList
                 data={games}
                 keyExtractor={(item) => item.id}
-                renderItem={({ item }) => <GameCard game={item} />}
+                renderItem={({ item }) => (
+                    <Pressable onPress={() => router.push(item.route as any)}>
+                        <GameCard game={item} />
+                    </Pressable>
+                )}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.listContent}
             />
@@ -103,9 +112,11 @@ export default function GamesScreen() {
                 title={gameTitle}
                 description={gameDescription}
                 imageUrl={gameImageUrl}
+                route={gameRoute}
                 onChangeTitle={setGameTitle}
                 onChangeDescription={setGameDescription}
                 onChangeImageUrl={setGameImageUrl}
+                onChangeRoute={setGameRoute}
                 onClose={() => setModalVisible(false)}
                 onSubmit={handleAddGame}
             />
